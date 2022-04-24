@@ -33,4 +33,8 @@ to create a file `response.json` with the HTTP response data.
 
 Note that while `request.json` is the filename looked for by default, the `-r` option allows this to be specified. Similarly, the `-o` option allows the output file to be specified.
 
+Additionally, if it is desired to have the response body written to a separate file, provide the '-b' option with the path to that file.
+
+Callsy also supports the option to read in the request body from another file by including the 'body_path' field in the request JSON file *instead of* the 'body' field.
+
 Also note that the `content-length` header can be automatically calculated by specifying it with a value of `null`. This is the only header than can be automatically calculated, other `null` headers will cause an error. Specify the empty string for empty headers.
