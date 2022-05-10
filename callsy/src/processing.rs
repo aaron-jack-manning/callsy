@@ -24,6 +24,7 @@ pub async fn respond(args : Arguments) -> Result<(), String> {
     let input_file = open_input_file(&args.request_file)?;
     let file_contents = read_input_file(input_file)?;
     let raw_request = deserialize_request_data(&file_contents)?;
+    check_extra_fields(&raw_request)?;
     let body = get_body(&raw_request)?;
     let body_for_file = body.clone();
     let processed_request = process_request_data(raw_request, body)?;
@@ -44,6 +45,8 @@ struct RawRequest {
     headers : HashMap<String, Option<String>>,
     body : Option<String>,
     body_path : Option<std::path::PathBuf>,
+    #[serde(flatten)]
+    other : serde_json::Value,
 }
 
 #[allow(dead_code)]
@@ -92,6 +95,7 @@ fn check_output_file(path : &std::path::PathBuf) -> Result<bool, String> {
     }
 }
 
+
 fn check_body_output_file(maybe_path : &Option<std::path::PathBuf>) -> Result<bool, String> {
     if let Some(path) = maybe_path {
         check_output_file(&path)
@@ -121,6 +125,25 @@ fn deserialize_request_data(request_data : &str) -> Result<RawRequest, String> {
     match serde_json::from_str(request_data) {
         Ok(data) => Ok(data),
         Err(error) => Err(format!("Unable to deserialise data from input file at line {}, column {}.", error.line(), error.column())),
+    }
+}
+
+fn check_extra_fields(raw_request : &RawRequest) -> Result<(), String> {
+    match &raw_request.other {
+        serde_json::Value::Object(m) => {
+            if m.is_empty() {
+                Ok(())
+            }
+            else {
+                let mut extra_keys = String::new();
+                for key in m.keys() {
+                    extra_keys.push_str(&key);
+                    extra_keys.push_str(", ");
+                }
+                Err(format!("Request JSON file included fields unknown to callsy: {}", extra_keys))
+            }
+        }
+        _ => Err(String::from("Request JSON file included fields unknown to callsy."))
     }
 }
 
