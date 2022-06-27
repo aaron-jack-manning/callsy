@@ -26,10 +26,10 @@ pub async fn respond(args : Arguments) -> Result<(), String> {
     let raw_request = deserialize_request_data(&file_contents)?;
     check_extra_fields(&raw_request)?;
     let body = get_body(&raw_request)?;
-    let body_for_file = body.clone();
     let processed_request = process_request_data(raw_request, body)?;
     let response = make_request(processed_request).await?;
     let output_response = convert_response(response).await?;
+    let body_for_file = output_response.body.clone();
     let serialized_response = serialize_response(output_response);
     let output_file = open_output_file(&args.output_file)?;
     write_to_output_file(output_file, serialized_response)?;
